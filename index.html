@@ -222,17 +222,11 @@
             font-size: 12pt;
             color: white;
             text-shadow: 0 0 10px rgba(170, 0, 255, 0.7);
-            padding: 20px;
             white-space: nowrap;
-            position: absolute;
-            bottom: 80px;
-            left: 20px;
-            transform: none;
+            margin-bottom: 10px;
         }
 
         .social-link {
-            position: fixed;
-            bottom: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -283,15 +277,17 @@
  |_|  \__,_|      |_| |_(_)_| |_|\___|\__|
 
                                           </pre>
-        <div class="ascii-art">（　´_ゝ`）ﾌｰﾝ</div>
     </div>
 
-    <a href="https://x.com/foontype" target="_blank" rel="noopener noreferrer" class="social-link">
-        <svg class="x-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-        </svg>
-        @foontype
-    </a>
+    <div style="position: fixed; bottom: 20px; left: 20px; z-index: 2;">
+        <div class="ascii-art">（　´_ゝ`）ﾌｰﾝ</div>
+        <a href="https://x.com/foontype" target="_blank" rel="noopener noreferrer" class="social-link">
+            <svg class="x-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            @foontype
+        </a>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
