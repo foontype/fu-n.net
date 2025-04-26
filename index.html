@@ -19,95 +19,172 @@
         body {
             font-family: 'MSPGothic', sans-serif;
             height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            width: 100vw;
             overflow: hidden;
-            background: #1a365d; /* 暗い青に変更 */
+            background: #000000;
             position: relative;
         }
-        
-        /* 複数のフォグレイヤーを作成 */
-        body::before,
-        body::after {
-            content: '';
-            position: absolute;
+
+        #canvas {
+            position: fixed;
             top: 0;
             left: 0;
-            width: 200%;
+            width: 100%;
             height: 100%;
-            pointer-events: none;
-        }
-        
-        /* 第1フォグレイヤー - 端がぼやけて中央が白い */
-        body::before {
-            background: radial-gradient(
-                circle at center,
-                rgba(255, 255, 255, 0.3) 0%,
-                rgba(255, 255, 255, 0.1) 40%,
-                rgba(255, 255, 255, 0) 70%
-            );
-            background-size: 50% 100%;
-            background-repeat: repeat-x;
-            animation: fogFlow1 30s linear infinite;
-            opacity: 0.7;
             z-index: 1;
+            display: none; /* 初期状態では非表示 */
         }
-        
-        /* 第2フォグレイヤー - 異なる速度でスクロール */
-        body::after {
-            background: radial-gradient(
-                circle at center,
-                rgba(255, 255, 255, 0.3) 0%,
-                rgba(255, 255, 255, 0.1) 30%,
-                rgba(255, 255, 255, 0) 60%
-            );
-            background-size: 35% 100%;
-            background-repeat: repeat-x;
-            animation: fogFlow2 20s linear infinite;
-            opacity: 0.5;
-            z-index: 2;
+
+        /* CSS煙エフェクト */
+        .smoke-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            z-index: 0;
+            overflow: hidden;
         }
-        
-        /* フォグ追加レイヤーのための擬似要素 */
-        .container::before {
-            content: '';
+
+        .smoke-layer {
             position: absolute;
             top: 0;
             left: 0;
-            width: 300%;
+            width: 100%;
             height: 100%;
-            background: radial-gradient(
-                circle at center,
-                rgba(255, 255, 255, 0.2) 0%,
-                rgba(255, 255, 255, 0.05) 50%,
-                rgba(255, 255, 255, 0) 80%
-            );
-            background-size: 25% 100%;
             background-repeat: repeat-x;
-            animation: fogFlow3 50s linear infinite;
-            opacity: 0.4;
-            z-index: 0;
             pointer-events: none;
         }
 
-        /* 左から右へ流れるアニメーション - 第1レイヤー */
-        @keyframes fogFlow1 {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
+        /* 第1レイヤー - シアン */
+        .smoke-layer-1 {
+            background-image: radial-gradient(
+                circle at center,
+                rgba(0, 255, 255, 0.15) 0%,
+                rgba(170, 0, 255, 0.1) 40%,
+                rgba(0, 0, 0, 0) 70%
+            );
+            background-size: 100% 300%; /* サイズを10倍程度に拡大 */
+            animation: smokeFlow1 60s linear infinite;
+            opacity: 0.6;
         }
-        
-        /* 右から左へ流れるアニメーション - 第2レイヤー */
-        @keyframes fogFlow2 {
-            0% { transform: translateX(-50%); }
-            100% { transform: translateX(0); }
+
+        /* 第2レイヤー - パープル */
+        .smoke-layer-2 {
+            top: 20%;
+            background-image: radial-gradient(
+                circle at center,
+                rgba(170, 0, 255, 0.15) 0%,
+                rgba(0, 255, 170, 0.08) 40%,
+                rgba(0, 0, 0, 0) 70%
+            );
+            background-size: 80% 300%; /* サイズを10倍程度に拡大 */
+            animation: smokeFlow2 45s linear infinite reverse;
+            opacity: 0.5;
         }
-        
-        /* より遅いスピードで左から右へ - 第3レイヤー */
-        @keyframes fogFlow3 {
-            0% { transform: translateX(-33.33%); }
-            100% { transform: translateX(0); }
+
+        /* 第3レイヤー - グリーン */
+        .smoke-layer-3 {
+            top: 40%;
+            background-image: radial-gradient(
+                circle at center,
+                rgba(0, 255, 170, 0.12) 0%,
+                rgba(0, 150, 255, 0.06) 40%,
+                rgba(0, 0, 0, 0) 70%
+            );
+            background-size: 120% 350%; /* サイズを10倍程度に拡大 */
+            animation: smokeFlow3 70s linear infinite;
+            opacity: 0.4;
+        }
+
+        /* アニメーション - 画面全体に広がるように */
+        @keyframes smokeFlow1 {
+            0% { transform: translateX(-100%) scale(1.2); }
+            50% { transform: translateX(0%) scale(1.5); }
+            100% { transform: translateX(100%) scale(1.2); }
+        }
+
+        @keyframes smokeFlow2 {
+            0% { transform: translateX(50%) scale(1.5); }
+            50% { transform: translateX(-50%) scale(1.8); }
+            100% { transform: translateX(-150%) scale(1.5); }
+        }
+
+        @keyframes smokeFlow3 {
+            0% { transform: translateX(-120%) scale(1.3); }
+            50% { transform: translateX(0%) scale(1.6); }
+            100% { transform: translateX(120%) scale(1.3); }
+        }
+
+        /* 光の点滅エフェクト - より大きく強力に */
+        .light {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px); /* より広範囲にぼかす */
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .light-cyan {
+            width: 500px; /* より大きく */
+            height: 500px;
+            background: rgba(0, 255, 255, 0.25);
+            left: 30%;
+            top: 30%;
+            animation: pulse-cyan 8s infinite alternate;
+        }
+
+        .light-purple {
+            width: 600px; /* より大きく */
+            height: 600px;
+            background: rgba(170, 0, 255, 0.25);
+            right: 20%;
+            top: 50%;
+            animation: pulse-purple 10s infinite alternate-reverse;
+        }
+
+        .light-green {
+            width: 400px; /* より大きく */
+            height: 400px;
+            background: rgba(0, 255, 170, 0.25);
+            left: 55%;
+            top: 25%;
+            animation: pulse-green 12s infinite alternate;
+        }
+
+        /* 追加の光源 */
+        .light-white {
+            width: 700px;
+            height: 700px;
+            background: rgba(255, 255, 255, 0.1);
+            left: 45%;
+            top: 40%;
+            animation: pulse-white 15s infinite alternate;
+        }
+
+        @keyframes pulse-cyan {
+            0% { opacity: 0.15; transform: scale(0.8) translate(-20px, -20px); }
+            50% { opacity: 0.3; transform: scale(1.2) translate(40px, 10px); }
+            100% { opacity: 0.25; transform: scale(1.0) translate(0px, 30px); }
+        }
+
+        @keyframes pulse-purple {
+            0% { opacity: 0.15; transform: scale(0.9) translate(30px, 0px); }
+            50% { opacity: 0.35; transform: scale(1.1) translate(-20px, 20px); }
+            100% { opacity: 0.3; transform: scale(1.2) translate(10px, -30px); }
+        }
+
+        @keyframes pulse-green {
+            0% { opacity: 0.15; transform: scale(0.7) translate(-30px, 20px); }
+            50% { opacity: 0.25; transform: scale(1.3) translate(20px, -10px); }
+            100% { opacity: 0.2; transform: scale(1.0) translate(10px, 0px); }
+        }
+
+        @keyframes pulse-white {
+            0% { opacity: 0.05; transform: scale(0.6) translate(0px, 0px); }
+            50% { opacity: 0.15; transform: scale(1.4) translate(10px, 10px); }
+            100% { opacity: 0.1; transform: scale(1.0) translate(-10px, -10px); }
         }
 
         .container {
@@ -119,13 +196,14 @@
             align-items: center;
             width: 100%;
             position: relative;
+            z-index: 2;
         }
 
         .ascii-logo {
             font-family: 'Consolas', monospace;
             font-size: 12pt;
             color: white;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
             white-space: pre;
             position: absolute;
             top: 20px;
@@ -133,17 +211,17 @@
             transform: translateX(-50%);
             line-height: 1.2;
         }
-        
+
         @media (max-height: 300px) {
             .ascii-logo, .social-link {
                 display: none;
             }
         }
-        
+
         .ascii-art {
             font-size: 12pt;
             color: white;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 0 10px rgba(170, 0, 255, 0.7);
             padding: 20px;
             white-space: nowrap;
             position: absolute;
@@ -166,6 +244,7 @@
             padding: 10px 20px;
             border-radius: 30px;
             background-color: rgba(0, 0, 0, 0.2);
+            z-index: 2;
         }
 
         .social-link:hover {
@@ -180,23 +259,361 @@
     </style>
 </head>
 <body>
+    <!-- CSS煙エフェクト（フォールバック） -->
+    <div class="smoke-effect">
+        <div class="smoke-layer smoke-layer-1"></div>
+        <div class="smoke-layer smoke-layer-2"></div>
+        <div class="smoke-layer smoke-layer-3"></div>
+        <div class="light light-cyan"></div>
+        <div class="light light-purple"></div>
+        <div class="light light-green"></div>
+        <div class="light light-white"></div>
+    </div>
+
+    <!-- WebGL用キャンバス -->
+    <canvas id="canvas"></canvas>
+
+    <!-- コンテンツ -->
     <div class="container">
-        <pre class="ascii-logo">   __                                 _   
-  / _|                               | |  
- | |_ _   _ ______ _ __    _ __   ___| |_ 
+        <pre class="ascii-logo">   __                                 _
+  / _|                               | |
+ | |_ _   _ ______ _ __    _ __   ___| |_
  |  _| | | |______| '_ \  | '_ \ / _ \ __|
- | | | |_| |      | | | |_| | | |  __/ |_ 
+ | | | |_| |      | | | |_| | | |  __/ |_
  |_|  \__,_|      |_| |_(_)_| |_|\___|\__|
-                                          
+
                                           </pre>
         <div class="ascii-art">（　´_ゝ`）ﾌｰﾝ</div>
     </div>
-    
+
     <a href="https://x.com/foontype" target="_blank" rel="noopener noreferrer" class="social-link">
         <svg class="x-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
         </svg>
         @foontype
     </a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // WebGL関連の処理を試みる
+            initWebGL();
+        });
+
+        function initWebGL() {
+            // 遅延読み込みでThree.jsを取得
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js'; // 一つ前のバージョンを使用
+            script.onload = startThreeJS;
+            script.onerror = function() {
+                console.log('Three.js読み込み失敗: CSSフォールバックを使用');
+            };
+            document.head.appendChild(script);
+        }
+
+        function startThreeJS() {
+            try {
+                // WebGLのサポートチェック
+                if (!isWebGLAvailable()) {
+                    console.log('WebGL非対応: CSSフォールバックを使用');
+                    return;
+                }
+
+                // Three.js初期化
+                let scene, camera, renderer;
+                let clock = new THREE.Clock();
+                let particles = [];
+                let lights = [];
+
+                // 設定
+                const PARTICLE_COUNT = 10; // 数を10分の1に減らす
+                const PARTICLE_SIZE_MIN = 15000; // さらに10倍大きく
+                const PARTICLE_SIZE_MAX = 25000; // さらに10倍大きく
+
+                // リサイズ処理
+                function onWindowResize() {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                }
+
+                // シーンの初期化
+                function initScene() {
+                    scene = new THREE.Scene();
+                    camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 15000);
+                    camera.position.z = 7000; // さらにカメラを遠ざけて巨大なパーティクルを表示
+
+                    const canvas = document.getElementById('canvas');
+                    renderer = new THREE.WebGLRenderer({
+                        canvas: canvas,
+                        antialias: false, // パフォーマンス優先
+                        alpha: true,
+                        powerPreference: 'default'
+                    });
+
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // 解像度制限
+
+                    window.addEventListener('resize', onWindowResize, false);
+                }
+
+                // ライト初期化
+                function initLights() {
+                    // 青色のライト - 超巨大なパーティクルに合わせて調整
+                    const blueLight = new THREE.PointLight(0x00FFFF, 25, 10000);
+                    blueLight.position.set(2000, 1500, 3000);
+                    scene.add(blueLight);
+                    lights.push(blueLight);
+
+                    // 紫色のライト - 超巨大なパーティクルに合わせて調整
+                    const purpleLight = new THREE.PointLight(0xAA00FF, 25, 10000);
+                    purpleLight.position.set(-2000, -1000, 2500);
+                    scene.add(purpleLight);
+                    lights.push(purpleLight);
+
+                    // 緑色のライト - 超巨大なパーティクルに合わせて調整
+                    const greenLight = new THREE.PointLight(0x00FFAA, 25, 10000);
+                    greenLight.position.set(0, -2000, 2000);
+                    scene.add(greenLight);
+                    lights.push(greenLight);
+
+                    // 追加: 白色のアンビエントライト - 全体を明るく
+                    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+                    scene.add(ambientLight);
+
+                    // 追加: 白色の方向光 - 煙のエッジを強調
+                    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+                    directionalLight.position.set(1, 1, 1).normalize();
+                    scene.add(directionalLight);
+                }
+
+                // パーティクル初期化
+                function initParticles() {
+                    return new Promise((resolve, reject) => {
+                        try {
+                            // テクスチャ読み込み
+                            const textureLoader = new THREE.TextureLoader();
+                            let loadedTextures = 0;
+                            let smokeTexture, normalTexture;
+
+                            // 煙テクスチャ
+                            textureLoader.load(
+                                'res/smoke.png',
+                                function(texture) {
+                                    smokeTexture = texture;
+                                    loadedTextures++;
+                                    if (loadedTextures === 2) createParticles();
+                                },
+                                undefined,
+                                function(error) {
+                                    console.error('煙テクスチャ読み込み失敗:', error);
+                                    reject(error);
+                                }
+                            );
+
+                            // 法線マップ
+                            textureLoader.load(
+                                'res/smoke_normal.png',
+                                function(texture) {
+                                    normalTexture = texture;
+                                    loadedTextures++;
+                                    if (loadedTextures === 2) createParticles();
+                                },
+                                undefined,
+                                function(error) {
+                                    console.error('法線マップ読み込み失敗:', error);
+                                    reject(error);
+                                }
+                            );
+
+                            // パーティクル作成
+                            function createParticles() {
+                                // マテリアル - より反射率を高く、より滑らかに
+                                //const particleMaterial = new THREE.MeshStandardMaterial({
+                                //    map: smokeTexture,
+                                //    normalMap: normalTexture,
+                                //    transparent: true,
+                                //    side: THREE.DoubleSide,
+                                //    //alphaTest: 0.03,
+                                //    metalness: 0.5, // より反射率を高く
+                                //    roughness: 0.5, // より滑らかに
+                                //    normalScale: new THREE.Vector2(1.5, 1.5) // 法線マップの効果を強化
+                                //});
+
+                                //const particleMaterial = new THREE.SpriteMaterial({
+                                //    map: smokeTexture,
+                                //    blending: THREE.AdditiveBlending,
+                                //    transparent: true,
+                                //    depthWrite: false
+                                //});
+
+                                const particleMaterial = new THREE.MeshBasicMaterial({
+                                    map: smokeTexture,
+                                    blending: THREE.AdditiveBlending,
+                                    transparent: true,
+                                    depthWrite: false,
+                                    side: THREE.DoubleSide,
+                                    alphaTest: 0.000001,
+                                });
+
+                                // ジオメトリ
+                                const particleGeometry = new THREE.PlaneGeometry(1, 1);
+
+                                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                                    // メッシュ作成
+                                    const particleMesh = new THREE.Mesh(particleGeometry, particleMaterial.clone());
+
+                                    // 超巨大なパーティクルを画面全体に広がるよう配置
+                                    const x = Math.random() * 20000 - 22000; // 左側に多く、右側にも少し
+                                    const y = Math.random() * 10000 - 5000; // 画面上下に広く分布
+                                    const z = Math.random() * 5 - 3; // 奥行きも広げる
+
+                                    particleMesh.position.set(x, y, z);
+                                    particleMesh.rotation.z = Math.random() * Math.PI * 2;
+
+                                    // サイズをランダムに
+                                    const size = Math.random() * (PARTICLE_SIZE_MAX - PARTICLE_SIZE_MIN) + PARTICLE_SIZE_MIN;
+                                    particleMesh.scale.set(size, size, 1);
+
+                                    // 移動速度など設定（超巨大なパーティクルのためにさらに速く）
+                                    const speedX = Math.random() * 500 + 400; // 巨大なので速度も上げる
+                                    const speedY = Math.random() * 30 - 15;  // Y方向の動きも強調
+                                    const speedRotation = (Math.random() * 0.001 - 0.0005); // 回転は遅めに
+
+                                    const particle = {
+                                        mesh: particleMesh,
+                                        speedX: speedX,
+                                        speedY: speedY,
+                                        speedRotation: speedRotation,
+                                        opacity: Math.random() * 0.2 + 0.05 // 大きなパーティクルなので不透明度を下げる
+                                    };
+
+                                    // 不透明度設定
+                                    particleMesh.material.opacity = particle.opacity;
+
+                                    // シーンに追加
+                                    scene.add(particleMesh);
+                                    particles.push(particle);
+                                }
+
+                                resolve();
+                            }
+                        } catch (error) {
+                            console.error('パーティクル初期化エラー:', error);
+                            reject(error);
+                        }
+                    });
+                }
+
+                // パーティクルアニメーション
+                function animateParticles() {
+                    const deltaTime = clock.getDelta();
+
+                    particles.forEach(particle => {
+                        // 移動
+                        particle.mesh.position.x += particle.speedX * deltaTime;
+                        particle.mesh.position.y += particle.speedY * deltaTime;
+
+                        // 回転
+                        particle.mesh.rotation.z += particle.speedRotation;
+
+                        // 画面外に出たら反対側に戻す
+                        if (particle.mesh.position.x > 10000) {
+                            particle.mesh.position.x = Math.random() * -12000 - 3000; // 左側のランダムな位置に
+                            particle.mesh.position.y = Math.random() * 10000 - 5000;  // 高さもランダムに再配置
+                            particle.mesh.position.z = Math.random() * 4000 - 2000;   // 奥行きも再配置
+
+                            // 不透明度リセット
+                            particle.mesh.material.opacity = particle.opacity;
+                        }
+
+                        // 画面端に近づくと徐々に透明に（左右両端）
+                        const edgeFadeDistance = 2000; // フェード距離も拡大
+
+                        // 右端に近づくと透明に
+                        if (particle.mesh.position.x > 8000) {
+                            const fadeOutFactor = 1 - (particle.mesh.position.x - 8000) / 2000;
+                            particle.mesh.material.opacity = particle.opacity * Math.max(0, fadeOutFactor);
+                        }
+                        // 左端に近づくと透明に
+                        else if (particle.mesh.position.x < -8000) {
+                            const fadeOutFactor = 1 - (Math.abs(particle.mesh.position.x) - 8000) / 2000;
+                            particle.mesh.material.opacity = particle.opacity * Math.max(0, fadeOutFactor);
+                        }
+                    });
+                }
+
+                // ライトアニメーション
+                function animateLights() {
+                    const time = clock.getElapsedTime();
+
+                    // 青色のライト - 超巨大な移動範囲と強度変化
+                    lights[0].intensity = 20 + Math.sin(time * 0.7) * 10;
+                    lights[0].position.x = 2000 + Math.sin(time * 0.2) * 1500;
+                    lights[0].position.y = 1500 + Math.cos(time * 0.3) * 1000;
+                    lights[0].position.z = 3000 + Math.sin(time * 0.25) * 500;
+
+                    // 紫色のライト - 超巨大な移動範囲と強度変化
+                    lights[1].intensity = 20 + Math.sin(time * 0.5) * 10;
+                    lights[1].position.y = -1000 + Math.sin(time * 0.3) * 1200;
+                    lights[1].position.x = -2000 + Math.cos(time * 0.4) * 1500;
+                    lights[1].position.z = 2500 + Math.cos(time * 0.35) * 600;
+
+                    // 緑色のライト - 超巨大な移動範囲と強度変化
+                    lights[2].intensity = 20 + Math.sin(time * 0.6) * 10;
+                    lights[2].position.z = 2000 + Math.sin(time * 0.45) * 800;
+                    lights[2].position.x = Math.sin(time * 0.25) * 2000;
+                    lights[2].position.y = -2000 + Math.cos(time * 0.35) * 1000;
+                    lights[2].color.setHSL(0.3 + Math.sin(time * 0.2) * 0.15, 1, 0.5);
+                }
+
+                // アニメーションループ
+                function animate() {
+                    requestAnimationFrame(animate);
+
+                    animateParticles();
+                    //animateLights();
+
+                    renderer.render(scene, camera);
+                }
+
+                // WebGL対応チェック
+                function isWebGLAvailable() {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        return !!(window.WebGLRenderingContext &&
+                            (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+                    } catch (e) {
+                        console.error('WebGL非対応:', e);
+                        return false;
+                    }
+                }
+
+                // WebGL初期化成功時
+                function enableWebGL() {
+                    document.querySelector('.smoke-effect').style.display = 'none';
+                    document.getElementById('canvas').style.display = 'block';
+                }
+
+                // メイン
+                async function main() {
+                    try {
+                        initScene();
+                        //initLights();
+                        await initParticles();
+                        enableWebGL();
+                        animate();
+                    } catch (error) {
+                        console.error('Three.js初期化エラー:', error);
+                    }
+                }
+
+                // 実行
+                main();
+
+            } catch (error) {
+                console.error('致命的なエラー:', error);
+            }
+        }
+    </script>
 </body>
 </html>
