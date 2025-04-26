@@ -327,7 +327,7 @@
                 // 設定
                 const PARTICLE_COUNT = 10; // 数を10分の1に減らす
                 const PARTICLE_SIZE_MIN = 15000; // さらに10倍大きく
-                const PARTICLE_SIZE_MAX = 25000; // さらに10倍大きく
+                const PARTICLE_SIZE_MAX = 30000; // さらに10倍大きく
 
                 // リサイズ処理
                 function onWindowResize() {
@@ -446,6 +446,13 @@
                                 //    depthWrite: false
                                 //});
 
+                                const colors = [
+                                  new THREE.Color(0xffffff), // 白
+                                  new THREE.Color(0x00ff00), // 緑
+                                  new THREE.Color(0x0000ff), // 青
+                                  new THREE.Color(0xff0000), // 赤
+                                ];
+
                                 const particleMaterial = new THREE.MeshBasicMaterial({
                                     map: smokeTexture,
                                     blending: THREE.AdditiveBlending,
@@ -453,14 +460,19 @@
                                     depthWrite: false,
                                     side: THREE.DoubleSide,
                                     alphaTest: 0.000001,
+                                    color: colors[0],
                                 });
 
                                 // ジオメトリ
                                 const particleGeometry = new THREE.PlaneGeometry(1, 1);
 
                                 for (let i = 0; i < PARTICLE_COUNT; i++) {
+                                    let material = particleMaterial.clone()
+
+                                    material.color = colors[Math.floor(Math.random() * colors.length)];
+
                                     // メッシュ作成
-                                    const particleMesh = new THREE.Mesh(particleGeometry, particleMaterial.clone());
+                                    const particleMesh = new THREE.Mesh(particleGeometry, material);
 
                                     // 超巨大なパーティクルを画面全体に広がるよう配置
                                     const x = Math.random() * 20000 - 22000; // 左側に多く、右側にも少し
@@ -477,14 +489,14 @@
                                     // 移動速度など設定（超巨大なパーティクルのためにさらに速く）
                                     const speedX = Math.random() * 500 + 400; // 巨大なので速度も上げる
                                     const speedY = Math.random() * 30 - 15;  // Y方向の動きも強調
-                                    const speedRotation = (Math.random() * 0.001 - 0.0005); // 回転は遅めに
+                                    const speedRotation = (Math.random() * 0.0008 - 0.0005); // 回転は遅めに
 
                                     const particle = {
                                         mesh: particleMesh,
                                         speedX: speedX,
                                         speedY: speedY,
                                         speedRotation: speedRotation,
-                                        opacity: Math.random() * 0.2 + 0.05 // 大きなパーティクルなので不透明度を下げる
+                                        opacity: Math.random() * 0.9 + 0.05 // 大きなパーティクルなので不透明度を下げる
                                     };
 
                                     // 不透明度設定
