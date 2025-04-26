@@ -206,9 +206,9 @@
             text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
             white-space: pre;
             position: absolute;
-            top: 20px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%);
             line-height: 1.2;
         }
 
@@ -225,9 +225,9 @@
             padding: 20px;
             white-space: nowrap;
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            bottom: 80px;
+            left: 20px;
+            transform: none;
         }
 
         .social-link {
@@ -447,10 +447,12 @@
                                 //});
 
                                 const colors = [
-                                  new THREE.Color(0xffffff), // 白
-                                  new THREE.Color(0x00ff00), // 緑
-                                  new THREE.Color(0x0000ff), // 青
-                                  new THREE.Color(0xff0000), // 赤
+                                  new THREE.Color(0xff0070), // ネオンピンク
+                                  new THREE.Color(0xff00ff), // マゼンタ/紫
+                                  new THREE.Color(0x00ffff), // シアン
+                                  new THREE.Color(0x0080ff), // 電気青
+                                  new THREE.Color(0xff3800), // サイバーオレンジ
+                                  new THREE.Color(0x9000ff)  // ディープパープル
                                 ];
 
                                 const particleMaterial = new THREE.MeshBasicMaterial({
@@ -487,16 +489,16 @@
                                     particleMesh.scale.set(size, size, 1);
 
                                     // 移動速度など設定（超巨大なパーティクルのためにさらに速く）
-                                    const speedX = Math.random() * 500 + 400; // 巨大なので速度も上げる
+                                    const speedX = Math.random() * 500 + 300; // 巨大なので速度も上げる
                                     const speedY = Math.random() * 30 - 15;  // Y方向の動きも強調
-                                    const speedRotation = (Math.random() * 0.0008 - 0.0005); // 回転は遅めに
+                                    const speedRotation = (Math.random() * 0.0005 - 0.0003); // 回転は遅めに
 
                                     const particle = {
                                         mesh: particleMesh,
                                         speedX: speedX,
                                         speedY: speedY,
                                         speedRotation: speedRotation,
-                                        opacity: Math.random() * 0.9 + 0.05 // 大きなパーティクルなので不透明度を下げる
+                                        opacity: Math.random() * 1 + 0.85 // 大きなパーティクルなので不透明度を下げる
                                     };
 
                                     // 不透明度設定
@@ -530,25 +532,26 @@
 
                         // 画面外に出たら反対側に戻す
                         if (particle.mesh.position.x > 10000) {
-                            particle.mesh.position.x = Math.random() * -12000 - 3000; // 左側のランダムな位置に
+                            particle.mesh.position.x = Math.random() * -10000 - 10000; // 左側のランダムな位置に
                             particle.mesh.position.y = Math.random() * 10000 - 5000;  // 高さもランダムに再配置
                             particle.mesh.position.z = Math.random() * 4000 - 2000;   // 奥行きも再配置
 
                             // 不透明度リセット
                             particle.mesh.material.opacity = particle.opacity;
+
+                            material.color = colors[Math.floor(Math.random() * colors.length)];
                         }
 
                         // 画面端に近づくと徐々に透明に（左右両端）
                         const edgeFadeDistance = 2000; // フェード距離も拡大
 
-                        // 右端に近づくと透明に
-                        if (particle.mesh.position.x > 8000) {
-                            const fadeOutFactor = 1 - (particle.mesh.position.x - 8000) / 2000;
+                        if (particle.mesh.position.x > 6000) {
+                            // 右端に近づくと透明に
+                            const fadeOutFactor = 1 - (particle.mesh.position.x - 6000) / 2000;
                             particle.mesh.material.opacity = particle.opacity * Math.max(0, fadeOutFactor);
-                        }
-                        // 左端に近づくと透明に
-                        else if (particle.mesh.position.x < -8000) {
-                            const fadeOutFactor = 1 - (Math.abs(particle.mesh.position.x) - 8000) / 2000;
+                        } else if (particle.mesh.position.x < -6000) {
+                            // 左端に近づくと透明に
+                            const fadeOutFactor = 1 - (Math.abs(particle.mesh.position.x) - 6000) / 2000;
                             particle.mesh.material.opacity = particle.opacity * Math.max(0, fadeOutFactor);
                         }
                     });
