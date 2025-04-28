@@ -473,7 +473,7 @@
                                     const particleMesh = new THREE.Mesh(particleGeometry, material);
 
                                     // 超巨大なパーティクルを画面全体に広がるよう配置
-                                    const x = Math.random() * 20000 - 22000; // 左側に多く、右側にも少し
+                                    const x = Math.random() * 35000 - 22000; // 左側に多く、右側にも少し
                                     const y = Math.random() * 10000 - 5000; // 画面上下に広く分布
                                     const z = Math.random() * 5 - 3; // 奥行きも広げる
 
@@ -485,9 +485,9 @@
                                     particleMesh.scale.set(size, size, 1);
 
                                     // 移動速度など設定（超巨大なパーティクルのためにさらに速く）
-                                    const speedX = Math.random() * 500 + 300; // 巨大なので速度も上げる
+                                    const speedX = Math.random() * 450 + 300; // 巨大なので速度も上げる
                                     const speedY = Math.random() * 30 - 15;  // Y方向の動きも強調
-                                    const speedRotation = (Math.random() * 0.0005 - 0.0003); // 回転は遅めに
+                                    const speedRotation = (Math.random() * 0.0007 - 0.0005); // 回転は遅めに
 
                                     const particle = {
                                         mesh: particleMesh,
