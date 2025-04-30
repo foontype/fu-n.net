@@ -35,6 +35,16 @@
             display: none; /* 初期状態では非表示 */
         }
 
+        #characterCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3; /* 煙エフェクトとASCIIロゴの上 */
+            pointer-events: none; /* マウスイベントを下層に通す */
+        }
+
         /* CSS煙エフェクト */
         .smoke-effect {
             position: fixed;
@@ -206,7 +216,7 @@
             text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
             white-space: pre;
             position: absolute;
-            top: 50%;
+            top: 20%;
             left: 50%;
             transform: translate(-50%, -50%);
             line-height: 1.2;
@@ -279,8 +289,11 @@
                                           </pre>
     </div>
 
+    <!-- キャラクターアニメーション用キャンバス -->
+    <canvas id="characterCanvas"></canvas>
+
     <div style="position: fixed; bottom: 20px; left: 20px; z-index: 2;">
-        <div class="ascii-art">（　´_ゝ`）ﾌｰﾝ</div>
+        <div class="ascii-art">（；´_ゝ`）ﾌｰﾝ</div>
         <a href="https://x.com/foontype" target="_blank" rel="noopener noreferrer" class="social-link">
             <svg class="x-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
@@ -289,21 +302,39 @@
         </a>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/inflate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fflate@0.7.4/umd/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- Fallback loader added directly-->
+    <script>
+    // Fallback definition of FBXLoader if not loaded from CDN
+    if (typeof FBXLoader === 'undefined') {
+        console.log('FBXLoader not available from CDN, using fallback');
+        // Since we can't define a full FBXLoader here, we'll create a dummy
+        // that will silently skip loading but not crash
+        window.FBXLoader = function() {
+            this.load = function(url, onLoad, onProgress, onError) {
+                console.log('Dummy FBXLoader called for:', url);
+                if (onError) onError(new Error('FBXLoader not properly initialized'));
+            };
+        };
+    }
+    </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // WebGL関連の処理を試みる
             initWebGL();
+            // キャラクターのアニメーション処理を初期化
+            initCharacterAnimation();
         });
 
         function initWebGL() {
-            // 遅延読み込みでThree.jsを取得
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js'; // 一つ前のバージョンを使用
-            script.onload = startThreeJS;
-            script.onerror = function() {
-                console.log('Three.js読み込み失敗: CSSフォールバックを使用');
-            };
-            document.head.appendChild(script);
+            // Three.jsはすでに読み込まれているのでそのまま初期化
+            startThreeJS();
         }
 
         function startThreeJS() {
@@ -535,7 +566,16 @@
                             // 不透明度リセット
                             particle.mesh.material.opacity = particle.opacity;
 
-                            material.color = colors[Math.floor(Math.random() * colors.length)];
+                            // カラーをランダムに設定
+                            const colors = [
+                                new THREE.Color(0xff0070), // ネオンピンク
+                                new THREE.Color(0xff00ff), // マゼンタ/紫
+                                new THREE.Color(0x00ffff), // シアン
+                                new THREE.Color(0x0080ff), // 電気青
+                                new THREE.Color(0xff3800), // サイバーオレンジ
+                                new THREE.Color(0x9000ff)  // ディープパープル
+                            ];
+                            particle.mesh.material.color = colors[Math.floor(Math.random() * colors.length)];
                         }
 
                         // 画面端に近づくと徐々に透明に（左右両端）
@@ -623,6 +663,120 @@
 
             } catch (error) {
                 console.error('致命的なエラー:', error);
+            }
+        }
+
+        // キャラクターアニメーション機能
+        function initCharacterAnimation() {
+            try {
+                // Check if FBXLoader exists globally
+                if (typeof FBXLoader === 'undefined') {
+                    console.log('FBXLoaderが利用できません。キャラクターアニメーションをスキップします。');
+                    return;
+                }
+
+                // シーン、カメラ、レンダラーの設定
+                const characterScene = new THREE.Scene();
+                const characterCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+                characterCamera.position.set(0, 2, 6);
+                characterCamera.lookAt(0, 1, 0);
+
+                const characterRenderer = new THREE.WebGLRenderer({
+                    canvas: document.getElementById('characterCanvas'),
+                    antialias: true,
+                    alpha: true
+                });
+                characterRenderer.setSize(window.innerWidth, window.innerHeight);
+                characterRenderer.setClearColor(0x000000, 0); // 透明な背景
+
+                // ライトの設定
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+                characterScene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(1, 2, 3);
+                characterScene.add(directionalLight);
+
+                // アニメーション用変数
+                let characterMixer;
+                const characterClock = new THREE.Clock();
+                let character;
+
+                // FBXモデルのロード（ラッピングでエラーハンドリングを改善）
+                try {
+                    const loader = new THREE.FBXLoader();
+                    loader.load('characters/Animation_OMG_Groove_withSkin.fbx', function(fbx) {
+                        character = fbx;
+
+                        // モデルのスケールと位置調整
+                        character.scale.set(0.015, 0.015, 0.015);
+                        character.position.set(0, 0, 0);
+
+                        // 影の設定
+                        character.traverse(function(child) {
+                            if (child.isMesh) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                            }
+                        });
+
+                        // アニメーションの設定
+                        characterMixer = new THREE.AnimationMixer(character);
+
+                        // すべてのアニメーションクリップを取得してループ再生
+                        if (character.animations.length > 0) {
+                            const action = characterMixer.clipAction(character.animations[0]);
+                            action.setLoop(THREE.LoopRepeat);
+                            action.play();
+                        }
+
+                        // キャラクターを真正面に向ける
+                        character.rotation.y = Math.PI; // 180度回転
+
+                        // シーンに追加
+                        characterScene.add(character);
+                    },
+                    // 進行状況
+                    function(xhr) {
+                        console.log((xhr.loaded / xhr.total * 100) + '% キャラクターモデル読み込み完了');
+                    },
+                    // エラー処理
+                    function(error) {
+                        console.error('キャラクターモデル読み込みエラー:', error);
+                    });
+                } catch (e) {
+                    console.error('FBXLoaderの初期化に失敗しました:', e);
+                }
+
+                // ウィンドウリサイズ時の処理
+                window.addEventListener('resize', function() {
+                    characterCamera.aspect = window.innerWidth / window.innerHeight;
+                    characterCamera.updateProjectionMatrix();
+                    characterRenderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                // キャラクターアニメーションループ
+                function animateCharacter() {
+                    requestAnimationFrame(animateCharacter);
+
+                    // ミキサーの更新
+                    if (characterMixer) {
+                        characterMixer.update(characterClock.getDelta());
+                    }
+
+                    // キャラクターが存在する場合、少し回転させる
+                    if (character) {
+                        character.rotation.y += 0.002; // ゆっくり回転させる
+                    }
+
+                    // レンダリング
+                    characterRenderer.render(characterScene, characterCamera);
+                }
+
+                // アニメーション開始
+                animateCharacter();
+            } catch (error) {
+                console.error('キャラクターアニメーション初期化エラー:', error);
             }
         }
     </script>
