@@ -42,7 +42,8 @@
             width: 100%;
             height: 100%;
             z-index: 3; /* 煙エフェクトとASCIIロゴの上 */
-            pointer-events: none; /* マウスイベントを下層に通す */
+            pointer-events: auto; /* マウスイベントを受け取れるようにする */
+            cursor: pointer; /* カーソルをポインターに変更 */
         }
 
         /* CSS煙エフェクト */
@@ -622,7 +623,7 @@
                     requestAnimationFrame(animate);
 
                     animateParticles();
-                    //animateLights();
+                    animateLights(); // ライトアニメーションを有効化
 
                     renderer.render(scene, camera);
                 }
@@ -649,7 +650,7 @@
                 async function main() {
                     try {
                         initScene();
-                        //initLights();
+                        initLights(); // ライトを有効化
                         await initParticles();
                         enableWebGL();
                         animate();
@@ -689,18 +690,70 @@
                 characterRenderer.setSize(window.innerWidth, window.innerHeight);
                 characterRenderer.setClearColor(0x000000, 0); // 透明な背景
 
-                // ライトの設定
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+                // サイバーカラーのライト設定
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
                 characterScene.add(ambientLight);
 
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                directionalLight.position.set(1, 2, 3);
-                characterScene.add(directionalLight);
+                // サイバーカラーの複数ポイントライトを追加
+                const cyberLights = [];
+                
+                // ネオンピンクライト
+                const pinkLight = new THREE.PointLight(0xff0070, 1.5, 10);
+                pinkLight.position.set(2, 1, 3);
+                characterScene.add(pinkLight);
+                cyberLights.push({light: pinkLight, baseColor: 0xff0070, hueOffset: 0});
+                
+                // シアンライト
+                const cyanLight = new THREE.PointLight(0x00ffff, 1.5, 10);
+                cyanLight.position.set(-2, 0, 3);
+                characterScene.add(cyanLight);
+                cyberLights.push({light: cyanLight, baseColor: 0x00ffff, hueOffset: 0.5});
+                
+                // 紫ライト
+                const purpleLight = new THREE.PointLight(0x9000ff, 1.5, 10);
+                purpleLight.position.set(0, 3, 2);
+                characterScene.add(purpleLight);
+                cyberLights.push({light: purpleLight, baseColor: 0x9000ff, hueOffset: 0.8});
 
                 // アニメーション用変数
                 let characterMixer;
                 const characterClock = new THREE.Clock();
                 let character;
+                
+                // キャラクターをクリッカブルにする
+                const characterCanvas = document.getElementById('characterCanvas');
+                characterCanvas.addEventListener('click', function() {
+                    // キャラクターページに遷移
+                    window.location.href = '/characters';
+                });
+                
+                // ホバー時のエフェクト
+                let isHovering = false;
+                characterCanvas.addEventListener('mousemove', function() {
+                    if (!character) return;
+                    if (!isHovering) {
+                        isHovering = true;
+                        // ホバー時に軽く拡大する
+                        character.scale.multiplyScalar(1.05);
+                        // 輝度を上げる
+                        cyberLights.forEach(light => {
+                            light.light.intensity *= 1.5;
+                        });
+                    }
+                });
+                
+                characterCanvas.addEventListener('mouseleave', function() {
+                    if (!character) return;
+                    if (isHovering) {
+                        isHovering = false;
+                        // 元のサイズに戻す
+                        character.scale.multiplyScalar(1/1.05);
+                        // 輝度を戻す
+                        cyberLights.forEach(light => {
+                            light.light.intensity /= 1.5;
+                        });
+                    }
+                });
 
                 // FBXモデルのロード（ラッピングでエラーハンドリングを改善）
                 try {
@@ -735,6 +788,27 @@
 
                         // シーンに追加
                         characterScene.add(character);
+                        
+                        // キャラクターへのサイバーカラーの適用
+                        character.traverse(function(child) {
+                            if (child.isMesh && child.material) {
+                                // マテリアルを複製して各メッシュのマテリアルを独立させる
+                                if (Array.isArray(child.material)) {
+                                    child.material = child.material.map(m => m.clone());
+                                } else {
+                                    child.material = child.material.clone();
+                                    
+                                    // エミッシブ効果でサイバー感を強化
+                                    child.material.emissive = new THREE.Color(0x2a0040);
+                                    child.material.emissiveIntensity = 0.2;
+                                    
+                                    // ハイライトを強調
+                                    if (child.material.shininess !== undefined) {
+                                        child.material.shininess = 60;
+                                    }
+                                }
+                            }
+                        });
                     },
                     // 進行状況
                     function(xhr) {
@@ -759,14 +833,38 @@
                 function animateCharacter() {
                     requestAnimationFrame(animateCharacter);
 
+                    const delta = characterClock.getDelta();
+                    const time = characterClock.getElapsedTime();
+
                     // ミキサーの更新
                     if (characterMixer) {
-                        characterMixer.update(characterClock.getDelta());
+                        characterMixer.update(delta);
                     }
 
                     // キャラクターが存在する場合、少し回転させる
                     if (character) {
                         character.rotation.y += 0.002; // ゆっくり回転させる
+                    }
+
+                    // サイバーライトをアニメーション
+                    if (cyberLights && cyberLights.length > 0) {
+                        cyberLights.forEach((lightObj, index) => {
+                            // 強度のパルスアニメーション
+                            lightObj.light.intensity = 1 + Math.sin(time * 2 + index) * 0.5;
+
+                            // 位置のアニメーション
+                            const angle = time * 0.8 + index * Math.PI * 0.5;
+                            const radius = 1.5;
+                            lightObj.light.position.x = Math.sin(angle) * radius;
+                            lightObj.light.position.y = 1.5 + Math.cos(angle * 0.7) * 0.5;
+                            lightObj.light.position.z = 3 + Math.sin(time * 0.5 + index) * 0.5;
+
+                            // 色相のアニメーション
+                            const hue = (time * 0.1 + lightObj.hueOffset) % 1;
+                            const color = new THREE.Color();
+                            color.setHSL(hue, 1, 0.5);
+                            lightObj.light.color = color;
+                        });
                     }
 
                     // レンダリング
