@@ -696,19 +696,19 @@
 
                 // サイバーカラーの複数ポイントライトを追加
                 const cyberLights = [];
-                
+
                 // ネオンピンクライト
                 const pinkLight = new THREE.PointLight(0xff0070, 1.5, 10);
                 pinkLight.position.set(2, 1, 3);
                 characterScene.add(pinkLight);
                 cyberLights.push({light: pinkLight, baseColor: 0xff0070, hueOffset: 0});
-                
+
                 // シアンライト
                 const cyanLight = new THREE.PointLight(0x00ffff, 1.5, 10);
                 cyanLight.position.set(-2, 0, 3);
                 characterScene.add(cyanLight);
                 cyberLights.push({light: cyanLight, baseColor: 0x00ffff, hueOffset: 0.5});
-                
+
                 // 紫ライト
                 const purpleLight = new THREE.PointLight(0x9000ff, 1.5, 10);
                 purpleLight.position.set(0, 3, 2);
@@ -719,14 +719,14 @@
                 let characterMixer;
                 const characterClock = new THREE.Clock();
                 let character;
-                
+
                 // キャラクターをクリッカブルにする
                 const characterCanvas = document.getElementById('characterCanvas');
                 characterCanvas.addEventListener('click', function() {
                     // キャラクターページに遷移
                     window.location.href = '/characters';
                 });
-                
+
                 // ホバー時のエフェクト
                 let isHovering = false;
                 characterCanvas.addEventListener('mousemove', function() {
@@ -741,7 +741,7 @@
                         });
                     }
                 });
-                
+
                 characterCanvas.addEventListener('mouseleave', function() {
                     if (!character) return;
                     if (isHovering) {
@@ -758,7 +758,7 @@
                 // FBXモデルのロード（ラッピングでエラーハンドリングを改善）
                 try {
                     const loader = new THREE.FBXLoader();
-                    loader.load('characters/Animation_OMG_Groove_withSkin.fbx', function(fbx) {
+                    loader.load('characters/Animation_Dancing_withSkin.fbx', function(fbx) {
                         character = fbx;
 
                         // モデルのスケールと位置調整
@@ -788,7 +788,7 @@
 
                         // シーンに追加
                         characterScene.add(character);
-                        
+
                         // キャラクターへのサイバーカラーの適用
                         character.traverse(function(child) {
                             if (child.isMesh && child.material) {
@@ -797,11 +797,11 @@
                                     child.material = child.material.map(m => m.clone());
                                 } else {
                                     child.material = child.material.clone();
-                                    
+
                                     // エミッシブ効果でサイバー感を強化
                                     child.material.emissive = new THREE.Color(0x2a0040);
                                     child.material.emissiveIntensity = 0.2;
-                                    
+
                                     // ハイライトを強調
                                     if (child.material.shininess !== undefined) {
                                         child.material.shininess = 60;
