@@ -304,22 +304,20 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/inflate.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fflate@0.7.4/umd/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <!-- Fallback loader added directly-->
     <script>
-    // Fallback definition of FBXLoader if not loaded from CDN
-    if (typeof FBXLoader === 'undefined') {
-        console.log('FBXLoader not available from CDN, using fallback');
-        // Since we can't define a full FBXLoader here, we'll create a dummy
+    // Fallback definition of GLTFLoader if not loaded from CDN
+    if (typeof GLTFLoader === 'undefined') {
+        console.log('GLTFLoader not available from CDN, using fallback');
+        // Since we can't define a full GLTFLoader here, we'll create a dummy
         // that will silently skip loading but not crash
-        window.FBXLoader = function() {
+        window.GLTFLoader = function() {
             this.load = function(url, onLoad, onProgress, onError) {
-                console.log('Dummy FBXLoader called for:', url);
-                if (onError) onError(new Error('FBXLoader not properly initialized'));
+                console.log('Dummy GLTFLoader called for:', url);
+                if (onError) onError(new Error('GLTFLoader not properly initialized'));
             };
         };
     }
@@ -670,9 +668,9 @@
         // キャラクターアニメーション機能
         function initCharacterAnimation() {
             try {
-                // Check if FBXLoader exists globally
-                if (typeof FBXLoader === 'undefined') {
-                    console.log('FBXLoaderが利用できません。キャラクターアニメーションをスキップします。');
+                // Check if GLTFLoader exists globally
+                if (typeof GLTFLoader === 'undefined') {
+                    console.log('GLTFLoaderが利用できません。キャラクターアニメーションをスキップします。');
                     return;
                 }
 
@@ -755,14 +753,66 @@
                     }
                 });
 
-                // FBXモデルのロード（ラッピングでエラーハンドリングを改善）
+                // GLTFモデルのロード（ラッピングでエラーハンドリングを改善）
                 try {
-                    const loader = new THREE.FBXLoader();
-                    loader.load('characters/Animation_Dancing_withSkin.fbx', function(fbx) {
-                        character = fbx;
+                    // LoadingManagerを作成してURLのリマップと進捗状況の管理を行う
+                    const manager = new THREE.LoadingManager();
+                    manager.setURLModifier(function(url) {
+                        console.log('リクエストされたURL:', url);
+
+                        // テクスチャファイルのパスを修正
+                        if (url.endsWith('.png') && !url.includes('/')) {
+                            // テクスチャファイルが参照されている場合、charactersディレクトリ内を探す
+                            const fixedUrl = 'characters/' + url;
+                            console.log('テクスチャファイルのパスを修正:', fixedUrl);
+                            return fixedUrl;
+                        }
+
+                        return url;
+                    });
+
+                    manager.onError = function(url) {
+                        console.error('リソースの読み込みに失敗しました:', url);
+                    };
+
+                    // テクスチャのデコードエラーを処理するためのキャッシュ設定
+                    THREE.Cache.enabled = true;
+
+                    const loader = new THREE.GLTFLoader(manager);
+
+                    // デバッグのためにリクエストされるパスをログに出力
+                    console.log('モデルのロード開始: characters/Animation_Dancing_withSkin.gltf');
+
+                    loader.load('characters/Animation_Dancing_withSkin.gltf', function(gltf) {
+                        console.log('GLTFモデルの読み込み成功:', gltf);
+                        character = gltf.scene;
+
+                        // テクスチャエラーを防ぐためにマテリアルを処理
+                        character.traverse(function(node) {
+                            if (node.isMesh && node.material) {
+                                // テクスチャを適用する
+                                if (Array.isArray(node.material)) {
+                                    node.material.forEach(material => {
+                                        // テクスチャを有効にする
+                                        if (material.map) material.map.needsUpdate = true;
+                                        if (material.normalMap) material.normalMap.needsUpdate = true;
+                                        if (material.roughnessMap) material.roughnessMap.needsUpdate = true;
+                                        if (material.metalnessMap) material.metalnessMap.needsUpdate = true;
+                                        material.needsUpdate = true;
+                                    });
+                                } else {
+                                    // テクスチャを有効にする
+                                    if (node.material.map) node.material.map.needsUpdate = true;
+                                    if (node.material.normalMap) node.material.normalMap.needsUpdate = true;
+                                    if (node.material.roughnessMap) node.material.roughnessMap.needsUpdate = true;
+                                    if (node.material.metalnessMap) node.material.metalnessMap.needsUpdate = true;
+                                    node.material.needsUpdate = true;
+                                }
+                            }
+                        });
 
                         // モデルのスケールと位置調整
-                        character.scale.set(0.015, 0.015, 0.015);
+                        character.scale.set(1.5, 1.5, 1.5);
                         character.position.set(0, 0, 0);
 
                         // 影の設定
@@ -777,14 +827,28 @@
                         characterMixer = new THREE.AnimationMixer(character);
 
                         // すべてのアニメーションクリップを取得してループ再生
-                        if (character.animations.length > 0) {
-                            const action = characterMixer.clipAction(character.animations[0]);
-                            action.setLoop(THREE.LoopRepeat);
-                            action.play();
+                        if (gltf.animations && gltf.animations.length > 0) {
+                            console.log('アニメーション数:', gltf.animations.length);
+
+                            // 各アニメーションのデバッグ情報
+                            gltf.animations.forEach((anim, index) => {
+                                console.log(`アニメーション[${index}]:`, anim.name, anim.duration);
+                            });
+
+                            try {
+                                const action = characterMixer.clipAction(gltf.animations[0]);
+                                action.setLoop(THREE.LoopRepeat);
+                                action.play();
+                                console.log('アニメーション再生開始');
+                            } catch (animError) {
+                                console.error('アニメーション再生エラー:', animError);
+                            }
+                        } else {
+                            console.log('アニメーションが見つかりません');
                         }
 
-                        // キャラクターを真正面に向ける
-                        character.rotation.y = Math.PI; // 180度回転
+                        // キャラクターを270度回転させる
+                        character.rotation.y = Math.PI * 1.5; // 270度回転
 
                         // シーンに追加
                         characterScene.add(character);
@@ -812,14 +876,71 @@
                     },
                     // 進行状況
                     function(xhr) {
-                        console.log((xhr.loaded / xhr.total * 100) + '% キャラクターモデル読み込み完了');
+                        if (xhr.lengthComputable) {
+                            console.log((xhr.loaded / xhr.total * 100) + '% キャラクターモデル読み込み完了');
+                        } else {
+                            console.log('キャラクターモデル読み込み中... ' + xhr.loaded + ' bytes');
+                        }
                     },
                     // エラー処理
                     function(error) {
                         console.error('キャラクターモデル読み込みエラー:', error);
+
+                        // エラー発生時にシンプルな代替オブジェクトを表示
+                        createFallbackCharacter();
                     });
                 } catch (e) {
-                    console.error('FBXLoaderの初期化に失敗しました:', e);
+                    console.error('GLTFLoaderの初期化に失敗しました:', e);
+
+                    // 初期化失敗時にもフォールバックキャラクターを作成
+                    createFallbackCharacter();
+                }
+
+                // フォールバック用のシンプルなキャラクター作成
+                function createFallbackCharacter() {
+                    try {
+                        console.log('フォールバックキャラクターを作成します');
+
+                        // シンプルな幾何学形状を作成
+                        const geometry = new THREE.BoxGeometry(1, 2, 1);
+                        const material = new THREE.MeshStandardMaterial({
+                            color: 0x00ffff,
+                            emissive: 0x2a0040,
+                            emissiveIntensity: 0.5,
+                            metalness: 0.7,
+                            roughness: 0.2
+                        });
+
+                        character = new THREE.Mesh(geometry, material);
+                        character.scale.set(0.5, 0.5, 0.5);
+                        character.position.set(0, 0, 0);
+
+                        // シーンに追加
+                        characterScene.add(character);
+
+                        // 簡易アニメーションを追加
+                        const clock = new THREE.Clock();
+                        const customAnimation = function() {
+                            if (character) {
+                                const time = clock.getElapsedTime();
+                                character.rotation.y += 0.01;
+                                character.position.y = Math.sin(time * 2) * 0.1;
+                            }
+                        };
+
+                        // アニメーションループを更新
+                        const originalAnimate = animateCharacter;
+                        animateCharacter = function() {
+                            requestAnimationFrame(animateCharacter);
+                            customAnimation();
+                            characterRenderer.render(characterScene, characterCamera);
+                        };
+
+                        // アニメーション開始
+                        animateCharacter();
+                    } catch (fallbackError) {
+                        console.error('フォールバックキャラクター作成エラー:', fallbackError);
+                    }
                 }
 
                 // ウィンドウリサイズ時の処理
@@ -842,9 +963,9 @@
                     }
 
                     // キャラクターが存在する場合、少し回転させる
-                    if (character) {
-                        character.rotation.y += 0.002; // ゆっくり回転させる
-                    }
+                    //if (character) {
+                    //    character.rotation.y += 0.002; // ゆっくり回転させる
+                    //}
 
                     // サイバーライトをアニメーション
                     if (cyberLights && cyberLights.length > 0) {
